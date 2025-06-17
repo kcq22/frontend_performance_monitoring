@@ -1,0 +1,11 @@
+# 忽略开发文件
+src/
+examples/
+test/
+rollup.config.js
+jest.config.js
+.eslintrc
+
+# 忽略构建过程文件
+*.log
+*.tmp
