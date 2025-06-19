@@ -1,4 +1,4 @@
-import { logger } from './utils/logger'
+import { logger } from '../utils/logger'
 /**
  * 监听资源加载，回调会收到 PerformanceResourceTiming 数组，并返回一个 stop 函数用于断开监听
  * @param {(entries: PerformanceResourceTiming[]) => void} callback

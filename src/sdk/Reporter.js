@@ -1,5 +1,5 @@
 // src/sdk/Reporter.js
-import { BatchProcessor } from './utils/BatchProcessor'
+import { BatchProcessor } from '../utils/BatchProcessor'
 
 export class Reporter {
   /**
@@ -13,7 +13,7 @@ export class Reporter {
   constructor ({
                  url,
                  batchSize = 5,
-                 maxQueueSize = 10,
+                 maxQueueSize = 5,
                  maxRetry = 1,
                  reportUrlTtl = 24 * 3600 * 1000,
                  headers = {},

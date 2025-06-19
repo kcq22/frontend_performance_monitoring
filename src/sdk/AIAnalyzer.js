@@ -1,6 +1,6 @@
-import { logger } from './utils/logger'
-import { parseAIJsonString } from './utils'
-import { BatchProcessor } from './utils/BatchProcessor'
+import { logger } from '../utils/logger'
+import { parseAIJsonString } from '../utils'
+import { BatchProcessor } from '../utils/BatchProcessor'
 
 export class AIAnalyzer {
   /**

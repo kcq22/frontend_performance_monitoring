@@ -1,4 +1,4 @@
-import { initPerfSDK } from './InitPerfSDK'
+import { initPerfSDK } from './sdk/InitPerfSDK'
 import { createPerfFirstPaintPlugin } from './plugins/PerfMonitorPlugin'
 
 export {

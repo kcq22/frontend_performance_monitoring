@@ -8,7 +8,7 @@ import {
   trackCLS
 } from './SoftVitals'
 import { installSPARouteTracker } from './SPARouteTracker'
-import { logger } from './utils/logger'
+import { logger } from '../utils/logger'
 
 const TEXT_LENGTH = 100 // 资源name截取长度
 
@@ -32,7 +32,7 @@ export class PerfCollector {
     this.maxFpsSamples = maxFpsSamples
     this.currentPage = window.location.pathname
     // 添加采样率配置
-    this.samplingRate = samplingRate <= 0 || samplingRate > 1 ? 1 : samplingRate
+    this.samplingRate = samplingRate < 0 || samplingRate > 1 ? 1 : samplingRate
     // 用于存储各个 stop 回调，方便 destroy 时调用
     this._observers = {
       resource: null,

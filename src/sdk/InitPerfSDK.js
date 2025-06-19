@@ -4,8 +4,8 @@ import { DataCache } from './DataCache'
 import { Reporter } from './Reporter'
 import { AIAnalyzer } from './AIAnalyzer'
 import { NetworkMonitor } from './NetworkMonitor'
-import { buildSystemPrompt, collectEnvironmentInfo } from './utils'
-import { logger, configureLogger } from './utils/logger'
+import { buildSystemPrompt, collectEnvironmentInfo } from '../utils'
+import { logger, configureLogger } from '../utils/logger'
 
 /**
  * 对外暴露的初始化方法

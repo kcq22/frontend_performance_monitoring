@@ -1,6 +1,6 @@
 // src/sdk/SPARouteTracker.js
 import { nextTick } from 'vue'
-import { logger } from './utils/logger'
+import { logger } from '../utils/logger'
 
 /**
  * 安装 SPA 路由渲染耗时追踪器，返回一个可以停止监听的 { stop() } 对象。
