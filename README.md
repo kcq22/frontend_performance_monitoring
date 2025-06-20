@@ -16,7 +16,7 @@ yarn add frontend_performance_monitoring
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import { initPerfSDK, createPerfFirstPaintPlugin } from 'your-perf-sdk'
+import { initPerfSDK, createPerfFirstPaintPlugin } from 'frontend_performance_monitoring'
 
 const { perfInstance, destroy } = initPerfSDK({
   router,
