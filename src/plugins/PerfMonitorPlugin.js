@@ -14,6 +14,7 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
   function setupObservers() {
     // 监听 FCP
     fcpObserver = new PerformanceObserver(list => {
+      logger.debug('[PerfFirstPaintPlugin] FCP entries:', list.getEntries())
       for (const entry of list.getEntries()) {
         if (!customFCP) customFCP = entry.startTime
       }
@@ -22,6 +23,7 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
 
     // 监听 LCP
     lcpObserver = new PerformanceObserver(list => {
+      logger.debug('[PerfFirstPaintPlugin] LCP entries:', list.getEntries())
       for (const entry of list.getEntries()) {
         customLCP = entry.startTime
       }
@@ -39,6 +41,7 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
   }
 
   function reportIfReady(route) {
+    logger.debug('[PerfFirstPaintPlugin] reportIfReady called:', { hasReported, customFCP, customLCP })
     if (hasReported) return
     const navEntries = performance.getEntriesByType('navigation')
     const hasNav = navEntries.length > 0
@@ -78,29 +81,25 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
 
   return {
     install(app) {
+      logger.debug('[PerfFirstPaintPlugin] install')
       setupObservers()
 
-      // 根组件 mounted 后尝试触发一次
-      app.mixin({
-        mounted() {
-          if (this.$root !== this) return
-          nextTick(() => {
-            const now = Math.round(performance.now())
-            // 仅首次赋值
-            if (customFCP == null) customFCP = now
-            if (customLCP == null) customLCP = now
-            logger.debug('[PerfFirstPaintPlugin] fallback FCP/LCP =', now, 'ms')
-            const route = router.currentRoute.value
-            if (route.name) {
-              reportIfReady(route)
-            }
-          })
-        }
-      })
-
+      let didFallback = false  // <- 标志位
       // 首次路由变更时补报
       router.afterEach(to => {
-        reportIfReady(to)
+        // 只在第一次「首屏」路由完成后跑
+        if (didFallback) return
+        didFallback = true
+
+        // reportIfReady(to)
+        nextTick(() => {
+          const now = Math.round(performance.now())
+          // 每个路由只取一次 fallback，避免覆盖真实 Observer 值
+          if (customFCP == null) customFCP = now
+          if (customLCP == null) customLCP = now
+          logger.debug('[PerfFirstPaintPlugin] afterEach FCP/LCP =', now, 'ms')
+          reportIfReady(to)
+        })
       })
     }
   }

@@ -1,14 +1,26 @@
 {
   "name": "frontend_performance_monitoring",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "前端性能监控 SDK",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
+  "exports": {
+    ".": {
+      "import": {
+        "development": "./dist/index.mjs",
+        "default": "./dist/index.esm.js"
+      },
+      "require": "./dist/index.cjs.js",
+      "default": "./dist/index.esm.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm run build",

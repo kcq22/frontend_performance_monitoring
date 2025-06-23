@@ -1,5 +1,6 @@
 // src/sdk/Reporter.js
 import { BatchProcessor } from '../utils/BatchProcessor'
+import { logger } from '../utils/logger'
 
 export class Reporter {
   /**
@@ -35,6 +36,10 @@ export class Reporter {
       maxRetry,
       processBatchFn: async (batch) => {
         // batch 中是 array of snapshots
+        logger.debug('发起 AI 请求，参数：', {
+          pages: batch,
+          environment: environmentInfo
+        })
         let params = batch
         if (setParams && typeof setParams === 'function') {
           params = setParams({

@@ -9,6 +9,12 @@ npm install frontend_performance_monitoring
 # 或者
 yarn add frontend_performance_monitoring
 ```
+本包依赖以下库，请确保在项目中已安装（版本需满足）：
+```bash
+npm install vue@^3.0.0 vue-router@^4.0.0 web-vitals@^2.1.4
+# 或
+yarn add vue@^3.0.0 vue-router@^4.0.0 web-vitals@^2.1.4
+```
 
 ## 快速开始
 
@@ -141,3 +147,49 @@ window.addEventListener('beforeunload', destroy)
 ```javascript
 app.use(createPerfFirstPaintPlugin({ router, perfInstance }))
 ```
+
+
+### 兼容旧版 Vue‑CLI / Webpack
+
+> 某些使用旧版 Vue‑CLI（≤4.x）或自定义 Webpack 的消费端，默认不会对 `node_modules` 里的 ESM 代码做 Babel 转译，可能会报 `Unexpected token`。  
+> 请在它们的构建配置里，手动把本包也纳入转译。
+
+#### Vue‑CLI（`vue.config.js`）
+
+```js
+// vue.config.js
+module.exports = {
+  transpileDependencies: [
+    'frontend_performance_monitoring'
+  ]
+}
+```
+
+#### 纯 Webpack + Babel
+```javascript
+// webpack.config.js
+module.exports = {
+  // … 其他配置 …
+  module: {
+    rules: [
+      // 让 babel-loader 也处理本包里的 .js / .mjs 文件
+      {
+        test: /\.m?js$/,
+        include: /node_modules\/frontend_performance_monitoring/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              ['@babel/preset-env', {
+                targets: '> 0.25%, not dead'
+              }]
+            ]
+          }
+        }
+      },
+      // … 你现有的其他规则 …
+    ]
+  }
+}
+```
+> ⚠️ 注意：上述配置仅在极少数“老脚手架”中需要；现代的 Vite、Webpack 5、Vue‑CLI 5⁺、Rollup 等工具均可开箱即用，无需额外配置。
