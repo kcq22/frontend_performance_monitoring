@@ -36,7 +36,7 @@ export class Reporter {
       maxRetry,
       processBatchFn: async (batch) => {
         // batch 中是 array of snapshots
-        logger.debug('发起 Report 请求，参数：', {
+        logger.info('发起 Report 请求，参数：', {
           pages: batch,
           environment: environmentInfo
         })

@@ -97,7 +97,7 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
           // 每个路由只取一次 fallback，避免覆盖真实 Observer 值
           if (customFCP == null) customFCP = now
           if (customLCP == null) customLCP = now
-          logger.debug('[PerfFirstPaintPlugin] afterEach FCP/LCP =', now, 'ms')
+          logger.info('[PerfFirstPaintPlugin] FCP/LCP =', now, 'ms')
           reportIfReady(to)
         })
       })

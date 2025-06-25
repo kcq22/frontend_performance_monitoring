@@ -93,7 +93,7 @@ export class BatchProcessor {
 
     // push pending
     this._pending.push(item)
-    logger.debug('BatchProcessor: 加入 当前队列', item)
+    // logger.debug('BatchProcessor: 加入 当前队列', item)
 
     // 凑够 batch 时，形成一个新的批次
     if (this._pending.length >= this.batchSize) {
