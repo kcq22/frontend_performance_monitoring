@@ -7,22 +7,22 @@ export class AIAnalyzer {
    * @param {object} [options]
    * @param {boolean} [options.logToConsole=true] — 是否打印到控制台
    */
-  constructor ({
-                 url,
-                 model,
-                 systemPrompt,
-                 logToConsole,
-                 headers = {},
-                 otherOptions = {},
-                 batchSize = 5,
-                 maxRetry = 1,
-                 maxMessages = 20,
-                 maxQueueSize = 5,
-                 analyzeTtl = 24 * 3600 * 1000,
-                 storageKey = 'PerfSDK_lastAnalyzeTime',
-                 onSuccess,
-                 environmentInfo
-               } = {}) {
+  constructor({
+                url,
+                model,
+                systemPrompt,
+                logToConsole,
+                headers = {},
+                otherOptions = {},
+                batchSize = 5,
+                maxRetry = 1,
+                maxMessages = 20,
+                maxQueueSize = 5,
+                analyzeTtl = 24 * 3600 * 1000,
+                storageKey = 'PerfSDK_lastAnalyzeTime',
+                onSuccess,
+                environmentInfo
+              } = {}) {
     this.systemPrompt = systemPrompt
     this.logToConsole = logToConsole
     this.maxRetry = maxRetry
@@ -135,19 +135,19 @@ export class AIAnalyzer {
    * 订阅 DataCache 的 enqueue 事件，当有新快照时，入队
    * @param {DataCache} dataCache
    */
-  subscribe (dataCache) {
-    if (!dataCache || typeof dataCache.enqueue !== 'function') {
+  subscribe(dataCache) {
+    if (!dataCache || typeof dataCache.subscribe !== 'function') {
       throw new Error('[Reporter] subscribe 需要传入 DataCache 实例')
     }
-    dataCache.onEnqueue = (snapshot) => {
+    dataCache.subscribe(snapshot => {
       this.processor.enqueue({ key: snapshot.pageName, ...snapshot })
-    }
+    })
   }
 
   /**
    * 简化版裁剪：只保留首条 system + 最近 maxMessages 条
    */
-  _trimMessageHistory () {
+  _trimMessageHistory() {
     const max = this.maxMessages
     const msg = this.messages
     // 如果总量 ≤ system(1) + max，则不用裁剪
@@ -170,7 +170,7 @@ export class AIAnalyzer {
     ]
   }
 
-  destroy () {
+  destroy() {
     this.processor.destroy()
   }
 }

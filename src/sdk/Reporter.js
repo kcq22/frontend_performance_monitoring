@@ -12,17 +12,17 @@ export class Reporter {
    * @param {string} [options.storageKey]     — 持久化 key (localStorage)
    */
   constructor ({
-                 url,
-                 batchSize = 5,
-                 maxQueueSize = 5,
-                 maxRetry = 1,
-                 reportUrlTtl = 24 * 3600 * 1000,
-                 headers = {},
-                 setParams,
-                 onSuccess,
-                 storageKey = 'PerfSDK_lastReportTime',
-                 environmentInfo
-               } = {}) {
+    url,
+    batchSize = 5,
+    maxQueueSize = 5,
+    maxRetry = 1,
+    reportUrlTtl = 24 * 3600 * 1000,
+    headers = {},
+    setParams,
+    onSuccess,
+    storageKey = 'PerfSDK_lastReportTime',
+    environmentInfo
+  } = {}) {
     if (!url || typeof url !== 'string') {
       throw new Error('[Reporter] Url 必填且为字符串')
     }
@@ -36,7 +36,7 @@ export class Reporter {
       maxRetry,
       processBatchFn: async (batch) => {
         // batch 中是 array of snapshots
-        logger.debug('发起 AI 请求，参数：', {
+        logger.debug('发起 Report 请求，参数：', {
           pages: batch,
           environment: environmentInfo
         })
@@ -65,17 +65,16 @@ export class Reporter {
    * 订阅 DataCache 的 enqueue 事件，当有新快照时，入队
    * @param {DataCache} dataCache
    */
-  subscribe (dataCache) {
-    if (!dataCache || typeof dataCache.enqueue !== 'function') {
+  subscribe(dataCache) {
+    if (!dataCache || typeof dataCache.subscribe !== 'function') {
       throw new Error('[Reporter] subscribe 需要传入 DataCache 实例')
     }
-    dataCache.onEnqueue = snapshot => {
-      // 把 snapshot 转成带 key 的 item
+    dataCache.subscribe(snapshot => {
       this.processor.enqueue({ key: snapshot.pageName, ...snapshot })
-    }
+    })
   }
 
-  destroy () {
+  destroy() {
     this.processor.destroy()
   }
 }

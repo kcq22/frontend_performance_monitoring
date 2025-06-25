@@ -41,7 +41,7 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
   }
 
   function reportIfReady(route) {
-    logger.debug('[PerfFirstPaintPlugin] reportIfReady called:', { hasReported, customFCP, customLCP })
+    // logger.debug('[PerfFirstPaintPlugin] reportIfReady called:', { hasReported, customFCP, customLCP })
     if (hasReported) return
     const navEntries = performance.getEntriesByType('navigation')
     const hasNav = navEntries.length > 0

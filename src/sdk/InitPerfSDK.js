@@ -21,7 +21,7 @@ import { logger, configureLogger } from '../utils/logger'
 // 全局网络状态
 let currentNetworkStatus = null
 
-export function initPerfSDK (options) {
+export function initPerfSDK(options) {
   const {
     router,
     report = {},
@@ -54,11 +54,7 @@ export function initPerfSDK (options) {
   const systemPrompt = buildSystemPrompt(scoringRules)
 
   // 1. 初始化 DataCache（缓存 & 批量上报）
-  const dataCache = new DataCache({
-    // 初始时 onEnqueue 是 no-op，会在下面被 Reporter/AIAnalyzer 覆盖
-    onEnqueue: () => {
-    }
-  })
+  const dataCache = new DataCache()
 
   //  Reporter：负责 HTTP 批量上报
   const reporter = report.url ? new Reporter({

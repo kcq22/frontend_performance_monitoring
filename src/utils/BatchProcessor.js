@@ -17,14 +17,14 @@ export class BatchProcessor {
    */
 
   constructor ({
-                 batchSize,
-                 maxQueueSize,
-                 ttl,
-                 storageKey,
-                 storageType = 'localStorage',
-                 maxRetry,
-                 processBatchFn
-               } = {}) {
+    batchSize,
+    maxQueueSize,
+    ttl,
+    storageKey,
+    storageType = 'localStorage',
+    maxRetry,
+    processBatchFn
+  } = {}) {
     if (typeof processBatchFn !== 'function') {
       throw new Error('BatchProcessor: processBatchFn 必填且为函数')
     }
@@ -66,7 +66,7 @@ export class BatchProcessor {
    * 尝试把单条 item 加入 pending & batch & queue
    * @param {{ key: string, [others]: any }} item — 必须有 key 字段
    */
-  enqueue (item) {
+  enqueue(item) {
     const key = item.key
     const newTs = item.timestamp
 
@@ -93,6 +93,7 @@ export class BatchProcessor {
 
     // push pending
     this._pending.push(item)
+    logger.debug('BatchProcessor: 加入 当前队列', item)
 
     // 凑够 batch 时，形成一个新的批次
     if (this._pending.length >= this.batchSize) {
@@ -102,7 +103,7 @@ export class BatchProcessor {
   }
 
   /** 将一整批 push 到队列，并尝试处理 */
-  _enqueueBatch (batch) {
+  _enqueueBatch(batch) {
     if (this._queue.length >= this.maxQueueSize) {
       logger.warn('BatchProcessor: 批次队列已满，丢弃当前批次')
       return
@@ -115,13 +116,13 @@ export class BatchProcessor {
   }
 
   /** 调度下一个批次 */
-  _flushNext () {
+  _flushNext() {
     if (this._processing || this._queue.length === 0) return
     this._processNext()
   }
 
   /** 真正处理队头批次，带重试和指数退避 */
-  async _processNext () {
+  async _processNext() {
     this._processing = true
 
     const { batch, retryCount } = this._queue.shift()
@@ -162,7 +163,7 @@ export class BatchProcessor {
   /**
    * 一次性：先把所有 pending 批量入 queue，然后触发所有批次上报
    */
-  async flushAll () {
+  async flushAll() {
     // 1. 把 pending 中剩余项打包入队
     while (this._pending.length > 0) {
       const batch = this._pending.splice(0, this.batchSize)
@@ -183,7 +184,7 @@ export class BatchProcessor {
   /**
    * 销毁：移除事件监听、清理内存，并触发一次 final flush
    */
-  async destroy () {
+  async destroy() {
     document.removeEventListener('visibilitychange', this._onVisibilityChange)
     window.removeEventListener('beforeunload', this._onBeforeUnload)
     await this.flushAll()
@@ -197,7 +198,7 @@ export class BatchProcessor {
    * @param {number} ts1
    * @param {number} ts2
    */
-  _isCloseInTime (ts1, ts2) {
+  _isCloseInTime(ts1, ts2) {
     return Math.abs(ts1 - ts2) < 500 // 500ms 根据实际需求可调
   }
 }
