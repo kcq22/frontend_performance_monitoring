@@ -1,5 +1,5 @@
 import { createPersistedMap, useInFlight } from './persistedMap'
-import { logger } from '../utils/logger'
+import { logger } from './logger'
 
 /**
  * 通用的“批量队列处理器”。

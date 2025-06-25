@@ -80,7 +80,7 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
   }
 
   return {
-    install(app) {
+    install() {
       logger.debug('[PerfFirstPaintPlugin] install')
       setupObservers()
 

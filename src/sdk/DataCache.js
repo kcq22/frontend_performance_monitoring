@@ -1,7 +1,4 @@
 export class DataCache {
-  /**
-   * @param {string} reportUrl — 后端性能数据上报接口
-   */
   constructor () {
     this.queue = [] // 本地的缓存队列
     // 存放所有订阅者的回调
