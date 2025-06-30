@@ -1,4 +1,4 @@
-import { createPersistedMap, useInFlight } from './persistedMap'
+import { createPersistedMap, useInFlight } from './PersistedMap'
 import { logger } from './logger'
 
 /**
@@ -16,15 +16,15 @@ export class BatchProcessor {
    * @param {(batch:Array<object>)=>Promise} options.processBatchFn — 真正的处理函数
    */
 
-  constructor ({
-    batchSize,
-    maxQueueSize,
-    ttl,
-    storageKey,
-    storageType = 'localStorage',
-    maxRetry,
-    processBatchFn
-  } = {}) {
+  constructor({
+                batchSize,
+                maxQueueSize,
+                ttl,
+                storageKey,
+                storageType = 'localStorage',
+                maxRetry,
+                processBatchFn
+              } = {}) {
     if (typeof processBatchFn !== 'function') {
       throw new Error('BatchProcessor: processBatchFn 必填且为函数')
     }
@@ -93,7 +93,7 @@ export class BatchProcessor {
 
     // push pending
     this._pending.push(item)
-    // logger.debug('BatchProcessor: 加入 当前队列', item)
+    logger.debug('BatchProcessor: 加入 当前队列', item, this._pending)
 
     // 凑够 batch 时，形成一个新的批次
     if (this._pending.length >= this.batchSize) {

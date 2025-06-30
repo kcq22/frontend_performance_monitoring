@@ -385,3 +385,31 @@ export function parseAIJsonString (rawStr) {
     return `JSON.parse 失败：${e.message}`
   }
 }
+
+/**
+ * 规范化 URL，只保留「路由部分」
+ * - 若包含 hash（“#/...”），则返回 hash 里的路径部分
+ * - 否则用 new URL 拿 pathname
+ *
+ * @param {string} fullUrl
+ * @returns {string} 例如 "/sub_pages_boutique_mall/pages/detail/detail"
+ */
+export function normalizePath(fullUrl) {
+  try {
+    const url = new URL(fullUrl, window.location.origin)
+    const hash = url.hash // 带 '#'
+    if (hash && hash.startsWith('#/')) {
+      // 去掉首个 '#'，然后再去掉查询参数
+      return hash.slice(1).split('?')[0]
+    }
+    // 无 hash 或 hash 不是路由，则返回 pathname（不带查询）
+    return url.pathname
+  } catch (e) {
+    // 兜底：手动拆
+    const parts = fullUrl.split('#')
+    if (parts[1] && parts[1].startsWith('/')) {
+      return parts[1].split('?')[0]
+    }
+    return parts[0].split('?')[0]
+  }
+}

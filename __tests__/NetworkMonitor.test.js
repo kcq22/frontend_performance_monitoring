@@ -1,4 +1,4 @@
-import { NetworkMonitor } from '../src/sdk/NetworkMonitor'
+import { NetworkMonitor } from '../src/utils/NetworkMonitor'
 
 describe('NetworkMonitor 事件', () => {
   const connectionMock = {

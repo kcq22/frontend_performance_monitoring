@@ -1,9 +1,10 @@
 // src/utils/perf-sdk/PerfFirstPaintPlugin.js
 import { nextTick } from 'vue'
 import { logger } from '../utils/logger'
+import { getFCP, getLCP } from 'web-vitals'
 
 export function createPerfFirstPaintPlugin({ router, perfInstance }) {
-  if (!router) throw new Error('[PerfFirstPaintPlugin] 必须传入 router')
+  // if (!router) throw new Error('[PerfFirstPaintPlugin] 必须传入 router')
   if (!perfInstance) throw new Error('[PerfFirstPaintPlugin] 必须传入 perfInstance')
 
   let hasReported = false
@@ -82,25 +83,39 @@ export function createPerfFirstPaintPlugin({ router, perfInstance }) {
   return {
     install() {
       logger.debug('[PerfFirstPaintPlugin] install')
-      setupObservers()
 
-      let didFallback = false  // <- 标志位
-      // 首次路由变更时补报
-      router.afterEach(to => {
-        // 只在第一次「首屏」路由完成后跑
-        if (didFallback) return
-        didFallback = true
+      // setupObservers()
 
-        // reportIfReady(to)
-        nextTick(() => {
-          const now = Math.round(performance.now())
-          // 每个路由只取一次 fallback，避免覆盖真实 Observer 值
-          if (customFCP == null) customFCP = now
-          if (customLCP == null) customLCP = now
-          logger.info('[PerfFirstPaintPlugin] FCP/LCP =', now, 'ms')
-          reportIfReady(to)
-        })
-      })
+      // // // 1. 让 FCP/LCP 的监听在「客户端渲染后」再启动
+      // window.addEventListener('load', () => {
+      //   // 等 load 后再下一帧注册
+      //   requestAnimationFrame(() => {
+      //     getLCP((metric) => {
+      //       logger.debug('LCP:', metric)
+      //     },true)
+      //     getFCP((metric) => {
+      //       logger.debug('FCP:', metric)
+      //     })
+      //   })
+      // })
+
+      // let didFallback = false  // <- 标志位
+      // // 首次路由变更时补报
+      // router.afterEach(to => {
+      //   // 只在第一次「首屏」路由完成后跑
+      //   if (didFallback) return
+      //   didFallback = true
+      //
+      //   // reportIfReady(to)
+      //   nextTick(() => {
+      //     const now = Math.round(performance.now())
+      //     // 每个路由只取一次 fallback，避免覆盖真实 Observer 值
+      //     if (customFCP == null) customFCP = now
+      //     if (customLCP == null) customLCP = now
+      //     logger.info('[PerfFirstPaintPlugin] FCP/LCP =', now, 'ms')
+      //     reportIfReady(to)
+      //   })
+      // })
     }
   }
 }

@@ -1,6 +1,12 @@
 # frontend_performance_monitoring
 
-本 SDK 适用于 Vue 3 SPA 应用，集成了硬导航 Core Web Vitals（LCP、FCP、TTFB、FID、CLS）、资源加载、长任务、FPS、内存、SPA 渲染时长等多种指标的采集与批量上报，并提供可选的 AI 分析功能和首屏性能插件。
+本 SDK 适用于 Vue 3 及任意 H5 SPA 应用（有无 Vue Router 均可），集成了：
+
+- **硬导航 Core Web Vitals**（LCP、FCP、TTFB、FID、CLS），自动检测并采集
+- **软导航指标**：资源加载、长任务、FPS、内存、CLS 累计
+- **SPA 渲染时长**：精准测量 Vue Router 渲染或原生 History/Hash 路由渲染耗时
+- **自动路由监听**：优先绑定 Vue Router，否则回退到原生 History/Hash/UNI‑App/Taro 全面捕获 URL 变化
+- **批量上报** & **可选 AI 分析**
 
 ## 安装
 
@@ -9,7 +15,10 @@ npm install frontend_performance_monitoring
 # 或者
 yarn add frontend_performance_monitoring
 ```
-本包依赖以下库，请确保在项目中已安装（版本需满足）：
+
+**Peer Dependencies**
+请确保项目中安装了以下包（版本仅需满足或更高）：
+
 ```bash
 npm install vue@^3.0.0 vue-router@^4.0.0 web-vitals@^2.1.4
 # 或
@@ -22,7 +31,7 @@ yarn add vue@^3.0.0 vue-router@^4.0.0 web-vitals@^2.1.4
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import { initPerfSDK, createPerfFirstPaintPlugin } from 'frontend_performance_monitoring'
+import { initPerfSDK } from 'frontend_performance_monitoring'
 
 const { perfInstance, destroy } = initPerfSDK({
   router,
@@ -32,10 +41,10 @@ const { perfInstance, destroy } = initPerfSDK({
       token: 'your token',
       ContentType: 'application/json'
     },
-    batchSize: 5,               // 批量上报数量，默认 5
-    maxQueueSize: 5,            // 缓存队列长度，默认 5
-    maxRetry: 1,                // 最大重试次数，默认 1
-    reportUrlTtl: 24 * 3600 * 1000, // 缓存过期时间，默认 24 小时
+    batchSize: 5,               // 批量上报数量，可选 默认 5
+    maxQueueSize: 5,            // 缓存队列长度，可选 默认 5
+    maxRetry: 1,                // 最大重试次数，可选 默认 1
+    reportUrlTtl: 24 * 3600 * 1000, // 缓存过期时间，可选 默认 24 小时
     storageKey: 'PerfSDK_lastReportTime', // 本地存储 Key
     setParams: (performance) => ({     // 自定义上报参数
       ...performance,
@@ -52,11 +61,11 @@ const { perfInstance, destroy } = initPerfSDK({
       token: 'your token',
       ContentType: 'application/json'
     },
-    batchSize: 5,               // 批量分析数量，默认 5
-    maxQueueSize: 5,            // 最大队列长度，默认 5
-    maxRetry: 1,                // 最大重试次数，默认 1
-    maxMessages: 20,            // 最大历史消息条数，默认 20
-    analyzeTtl: 24 * 3600 * 1000,   // 分析缓存过期时间，默认 24 小时
+    batchSize: 5,               // 批量分析数量，可选 默认 5
+    maxQueueSize: 5,            // 最大队列长度，可选 默认 5
+    maxRetry: 1,                // 最大重试次数，可选 默认 1
+    maxMessages: 20,            // 最大历史消息条数，可选 默认 20
+    analyzeTtl: 24 * 3600 * 1000,   // 分析缓存过期时间，可选 默认 24 小时
     storageKey: 'PerfSDK_lastAnalyzeTime', // 本地存储 Key
     logToConsole: true,         // 是否打印 AI 分析结果到控制台
     otherOptions: null,         // 透传给 AI 服务器的其他参数
@@ -64,7 +73,7 @@ const { perfInstance, destroy } = initPerfSDK({
       console.log('rawContent', rawContent)
     }
   },
-  scoringRules: {              // 性能阈值规则配置
+  scoringRules: {              //可选 性能阈值规则配置，不传使用默认配置
     LCP: [1000, 2000],
     FCP: [500, 1000],
     TTFB: [200, 500],
@@ -80,7 +89,6 @@ const { perfInstance, destroy } = initPerfSDK({
   maxFpsSamples: 100,          // 最大 FPS 采样点数
   samplingRate: 1.0,           // 采样率（0~1）
   logLevel: 'debug',           // 日志级别（DEBUG/INFO/WARN/ERROR/SILENT）
-  useWebVitals: false          // 是否启用原生 Web Vitals
 })
 
 const app = createApp(App)
@@ -92,17 +100,15 @@ app.mount('#app')
 // 页面卸载或刷新前销毁 SDK
 window.addEventListener('beforeunload', destroy)
 ```
-### 2. 常用 API
 
-#### `initPerfSDK(options)`
-
+## 常用 API
 - **参数说明**：
 
   | 名称                          | 类型              | 必填 | 默认值        | 说明                                                    |
     | ----------------------------- | ----------------- | ---- |------------| ------------------------------------------------------- |
-  | `router`                      | Router            | ✓    | —          | Vue Router 实例                                         |
-  | `report`                      | Object            | ✓    | —          | 上报配置对象                                            |
-  | `report.url`                  | string            | ✓    | —          | 后端上报接口 URL                                        |
+  | `router`                      | Router            | ✗    | —          | Vue Router 实例                                         |
+  | `report`                      | Object            | ✗    | —          | 上报配置对象                                            |
+  | `report.url`                  | string            | ✗    | —          | 后端上报接口 URL                                        |
   | `report.headers`              | object            | ✗    | `{}`       | 自定义请求头，如 token、Content‑Type 等                 |
   | `report.batchSize`            | number            | ✗    | `5`        | 每批次上报条数                                          |
   | `report.maxQueueSize`         | number            | ✗    | `5`        | 批次队列最大长度                                        |
@@ -129,29 +135,57 @@ window.addEventListener('beforeunload', destroy)
   | `maxFpsSamples`               | number            | ✗    | `60`       | 最大 FPS 采样点数                                       |
   | `samplingRate`                | number            | ✗    | `1.0`      | 随机采样率，范围 0~1                                    |
   | `logLevel`                    | string            | ✗    | `WARN`     | 日志级别（DEBUG/INFO/WARN/ERROR/SILENT）                |
-  | `useWebVitals`                | boolean           | ✗    | `false`    | 是否启用原生 Web Vitals 性能指标采集                    |
 
 - **返回值**：
 
   ```js
   {
     perfInstance, // PerfCollector 实例，可手动触发或扩展
-    destroy       // 销毁 SDK，断开所有监听并清理资源
+    destroy       // 方法 销毁 SDK，断开所有监听并清理资源
   }
 
+## 常用场景示例
 
-
-### createPerfFirstPaintPlugin({ router, perfInstance })
-首屏性能（FCP/LCP）监控插件，需在 Vue 根组件中安装：
+**有 Vue Router**
 
 ```javascript
-app.use(createPerfFirstPaintPlugin({ router, perfInstance }))
+const { perfInstance, destroy } = initPerfSDK({ router, report: { ... } })
+const app = createApp(App)
+app.use(router)          // 必须要在 initPerfSDK 之后再挂载
+app.mount('#app')
 ```
 
+- 行为：
 
-### 兼容旧版 Vue‑CLI / Webpack
+    - 首次加载后，自动采集 Hard Vitals 并上报首页
 
-> 某些使用旧版 Vue‑CLI（≤4.x）或自定义 Webpack 的消费端，默认不会对 `node_modules` 里的 ESM 代码做 Babel 转译，可能会报 `Unexpected token`。  
+    - 每次路由切换前，上报上一页的软导航数据
+
+    - 每次路由切换完成后，测量渲染耗时并注入 snapshot
+
+**无 Vue Router（通用 H5、UNI‑App、Taro…）**
+
+```javascript
+const { perfInstance, destroy } = initPerfSDK({ report: { ... } })
+const app = createApp(App)
+app.mount('#app')
+```
+
+- 行为：
+
+    - 自动拦截 History API、hashchange、链接点击、表单提交，以及 UNI‑App/Taro API
+
+    - 每次 URL 变化，把上一页累积数据上报
+
+    - 用 requestAnimationFrame 简易估算渲染耗时
+
+
+
+## 兼容性 & 构建
+**兼容旧版 Vue‑CLI / Webpack**
+
+> 某些使用旧版 Vue‑CLI（≤4.x）或自定义 Webpack 的消费端，默认不会对 `node_modules` 里的 ESM 代码做 Babel
+> 转译，可能会报 `Unexpected token`。  
 > 请在它们的构建配置里，手动把本包也纳入转译。
 
 #### Vue‑CLI（`vue.config.js`）
@@ -166,6 +200,7 @@ module.exports = {
 ```
 
 #### 纯 Webpack + Babel
+
 ```javascript
 // webpack.config.js
 module.exports = {
@@ -192,4 +227,5 @@ module.exports = {
   }
 }
 ```
-> ⚠️ 注意：上述配置仅在极少数“老脚手架”中需要；现代的 Vite、Webpack 5、Vue‑CLI 5⁺、Rollup 等工具均可开箱即用，无需额外配置。
+
+> ⚠️ 注意：上述配置仅在极少数“老脚手架”中需要；现代的 Vite、Webpack 5、Vue‑CLI 5⁺、Rollup 等工具均可开箱即用，无需额外配置。

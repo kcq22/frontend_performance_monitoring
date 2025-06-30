@@ -2,9 +2,9 @@
 // 专注 PerfCollector 本身，不再断言 _isCloseInTime
 
 import { PerfCollector } from '../src/sdk/PerfCollector'
-import * as SoftVitals from '../src/sdk/SoftVitals'
-import * as SPARouteTracker from '../src/sdk/SPARouteTracker'
-import { collectHardVitals } from '../src/sdk/CollectHardVitals'
+import * as SoftVitals from '../src/utils/SoftVitals'
+import * as SPARouteTracker from '../src/utils/SPARouteTracker'
+import { collectHardVitals } from '../src/utils/CollectHardVitals'
 
 jest.useFakeTimers()
 

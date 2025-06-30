@@ -1,5 +1,5 @@
 // SPARouteTracker.test.js
-import { installSPARouteTracker } from '../src/sdk/SPARouteTracker'
+import { installSPARouteTracker } from '../src/utils/SPARouteTracker'
 import { nextTick } from 'vue'
 
 // mock vue 的 nextTick，让回调同步执行，方便测试

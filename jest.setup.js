@@ -36,7 +36,7 @@ jest.mock('./src/utils/logger', () => ({
 }))
 
 // mock SoftVitals 和 SPARouteTracker
-jest.mock('./src/sdk/SoftVitals', () => ({
+jest.mock('./src/utils/SoftVitals', () => ({
   observeResources: jest.fn(),
   observeLongTasks: jest.fn(),
   trackFPS: jest.fn(),
@@ -44,10 +44,10 @@ jest.mock('./src/sdk/SoftVitals', () => ({
   trackCLS: jest.fn()
 }))
 
-jest.mock('./src/sdk/SPARouteTracker', () => ({
+jest.mock('./src/utils/SPARouteTracker', () => ({
   installSPARouteTracker: jest.fn()
 }))
 
-jest.mock('./src/sdk/CollectHardVitals', () => ({
+jest.mock('./src/utils/CollectHardVitals', () => ({
   collectHardVitals: jest.fn()
 }))
