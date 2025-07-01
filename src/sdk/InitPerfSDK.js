@@ -103,7 +103,7 @@ export function initPerfSDK(options) {
       samplingRate
     }
   )
-  
+
   // 路由监听
   if (router && router.afterEach) {
     // 优先使用 Vue Router
@@ -112,7 +112,7 @@ export function initPerfSDK(options) {
     // 原生 History/Hash 方案
     perf.bindNativeListener()
   }
-  // logger.info('SPA 性能监控 SDK 已启动')
+  logger.info('SPA 性能监控 SDK 已启动')
 
   return {
     destroy: () => {

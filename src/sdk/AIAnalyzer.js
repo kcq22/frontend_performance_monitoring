@@ -126,7 +126,9 @@ export class AIAnalyzer {
         })
         sessionStorage.setItem('ai_analyzer_message', JSON.stringify(this.messages))
 
-        onSuccess(rawContent)
+        if (onSuccess && typeof onSuccess === 'function') {
+          onSuccess(rawContent)
+        }
       }
     })
   }

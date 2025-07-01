@@ -111,7 +111,7 @@ export class BatchProcessor {
     const keys = batch.map(i => i.key)
     // 标记 in‑flight **只在真正入队时**
     this._markInFlight(keys)
-    this._queue.push({ batch, retryCount: 0 })
+    this._queue.push({ uuid: `batch_${Date.now()}`, batch, retryCount: 0 })
     this._flushNext()
   }
 
@@ -125,7 +125,7 @@ export class BatchProcessor {
   async _processNext() {
     this._processing = true
 
-    const { batch, retryCount } = this._queue.shift()
+    const { uuid, batch, retryCount } = this._queue.shift()
     const keys = batch.map(i => i.key)
 
     try {
@@ -140,20 +140,32 @@ export class BatchProcessor {
       // 尝试处理下一个
       this._flushNext()
     } catch (err) {
-      logger.error(`BatchProcessor: 批次处理失败 (尝试 ${retryCount}/${this.maxRetry})`, err)
+      logger.error(`BatchProcessor: ${uuid}批次处理失败 (尝试 ${retryCount}/${this.maxRetry})`, err)
       // 失败：清 in‑flight
       this._clearInFlight(keys)
 
       if (retryCount < this.maxRetry) {
         // 指数退避后重试
-        const delay = 500 * Math.pow(2, retryCount)
+        const delay = 10 * Math.pow(2, retryCount)
         setTimeout(() => {
-          this._queue.unshift({ batch, retryCount: retryCount + 1 })
+          // 1. 先释放处理锁
           this._processing = false
+          // 2. 将批次重新加入队列（重试计数+1）
+          this._queue.unshift({ uuid, batch, retryCount: retryCount + 1 })
+          // 3. 触发后续处理
           this._flushNext()
         }, delay)
       } else {
-        // 超过重试，不再重试
+        // +++ 关键修复：达到最大重试后标记为"已处理" ++ +
+        const now = Date.now()
+        keys.forEach(key => {
+          // 更新存储时间，避免相同key重新入队
+          this._store.set(key, now)
+        })
+
+        // 记录最终失败
+        logger.warn(`BatchProcessor: 批次达到最大重试次数 (${this.maxRetry})，放弃处理`, keys)
+
         this._processing = false
         this._flushNext()
       }
