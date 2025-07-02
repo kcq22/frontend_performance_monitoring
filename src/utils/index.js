@@ -284,9 +284,6 @@ ${rulesText}
       { "name": "runtime.js", "duration": 400, "startTime": 120 },
       { "name": "app.js",     "duration": 600, "startTime": 130 }
     ],
-    "longtask": [
-      { "name": "self", "duration": 120, "startTime": 400 }
-    ],
     "fps": [60, 57, 60, 55],
     "jsHeapSizeLimit": 1500000000,
     "memory": 1200000000

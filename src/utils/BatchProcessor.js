@@ -156,15 +156,10 @@ export class BatchProcessor {
           this._flushNext()
         }, delay)
       } else {
-        // +++ 关键修复：达到最大重试后标记为"已处理" ++ +
-        const now = Date.now()
-        keys.forEach(key => {
-          // 更新存储时间，避免相同key重新入队
-          this._store.set(key, now)
-        })
-
         // 记录最终失败
         logger.warn(`BatchProcessor: 批次达到最大重试次数 (${this.maxRetry})，放弃处理`, keys)
+        // +++ 关键修复：达到最大重试后标记为"已处理" ++ +
+        this._clearInFlight(keys)
 
         this._processing = false
         this._flushNext()
