@@ -110,7 +110,7 @@ export class AIAnalyzer {
           logger.error('解析 AI 返回 JSON 失败，原始内容：', rawContent, err)
           parsedContent = rawContent // 即使解析失败，也保留原始字符串
         }
-
+        debugger
         // 打印到控制台
         if (this.logToConsole) {
           console.group('%c 📊 性能分析结果', 'color: #409EFF; font-weight: bold;')

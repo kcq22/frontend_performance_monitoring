@@ -1,4 +1,5 @@
 import { defaultScoringRules } from './const'
+import { logger } from './logger'
 
 /**
  * 通用控制台展示函数：把 AI 返回的 Markdown 内容按 “### ” 标题分组，
@@ -378,8 +379,9 @@ export function parseAIJsonString (rawStr) {
   try {
     return JSON.parse(text)
   } catch (e) {
-    // 捕获 JSON 解析错误，返回错误信息
-    return `JSON.parse 失败：${e.message}`
+    // 捕获 JSON 解析错误，返回原始数据
+    logger.error('JSON.parse 失败：', e)
+    return rawStr
   }
 }
 
