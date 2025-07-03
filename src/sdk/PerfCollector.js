@@ -171,12 +171,13 @@ export class PerfCollector {
   }
 
   buildSnapshot(page, fullPath) {
-    const resource = fullCollection
+    // 排序并截取前 maxResourceEntries 个资源
+    const resource = this.fullCollection
       ? this.metrics.resourceEntries
       : this.metrics.resourceEntries
       ?.sort((a, b) => Number(b.duration) - Number(a.duration))
       .slice(0, this.maxResourceEntries) || []
-    // const longtask = fullCollection
+    // const longtask = this.fullCollection
     //   ? this.metrics.longtaskEntries
     //   : this.metrics.longtaskEntries
     //       ?.sort((a, b) => Number(b.duration) - Number(a.duration))

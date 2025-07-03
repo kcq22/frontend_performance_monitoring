@@ -3,7 +3,7 @@
 本 SDK 适用于 Vue 3 及任意 H5 SPA 应用（有无 Vue Router 均可），集成了：
 
 - **硬导航 Core Web Vitals**（LCP、FCP、TTFB、FID、CLS），自动检测并采集
-- **软导航指标**：资源加载、长任务、FPS、内存、CLS 累计
+- **软导航指标**：资源加载、FPS、内存、CLS 累计
 - **SPA 渲染时长**：精准测量 Vue Router 渲染或原生 History/Hash 路由渲染耗时
 - **自动路由监听**：优先绑定 Vue Router，否则回退到原生 History/Hash/UNI‑App/Taro 全面捕获 URL 变化
 - **批量上报** & **可选 AI 分析**
@@ -89,6 +89,8 @@ const { perfInstance, destroy } = initPerfSDK({
   maxFpsSamples: 100,          // 最大 FPS 采样点数
   samplingRate: 1.0,           // 采样率（0~1）
   logLevel: 'debug',           // 日志级别（DEBUG/INFO/WARN/ERROR/SILENT）
+  maxResourceEntries: 50, // 最大资源条目数 默认50
+  fullCollection: false // 是否全量采集资源
 })
 
 const app = createApp(App)
@@ -104,37 +106,39 @@ window.addEventListener('beforeunload', destroy)
 ## 常用 API
 - **参数说明**：
 
-  | 名称                          | 类型              | 必填 | 默认值        | 说明                                                    |
-    | ----------------------------- | ----------------- | ---- |------------| ------------------------------------------------------- |
-  | `router`                      | Router            | ✗    | —          | Vue Router 实例                                         |
-  | `report`                      | Object            | ✗    | —          | 上报配置对象                                            |
-  | `report.url`                  | string            | ✗    | —          | 后端上报接口 URL                                        |
-  | `report.headers`              | object            | ✗    | `{}`       | 自定义请求头，如 token、Content‑Type 等                 |
-  | `report.batchSize`            | number            | ✗    | `5`        | 每批次上报条数                                          |
-  | `report.maxQueueSize`         | number            | ✗    | `5`        | 批次队列最大长度                                        |
-  | `report.maxRetry`             | number            | ✗    | `1`        | 最大重试次数                                            |
-  | `report.reportUrlTtl`         | number (ms)       | ✗    | `86400000` | 相同 key 的最小上报间隔（毫秒）                         |
-  | `report.storageKey`           | string            | ✗    | —          | 本地存储 Key                                            |
-  | `report.setParams`            | func              | ✗    | —          | 自定义批量上报参数组装函数                              |
-  | `report.onSuccess`            | func              | ✗    | —          | 上报成功回调                                            |
-  | `aiOptions`                   | Object            | ✗    | —          | AI 分析配置                                             |
-  | `aiOptions.url`               | string            | ✗    | —          | AI 接口 URL                                             |
-  | `aiOptions.model`             | string            | ✗    | —          | AI 模型名称                                             |
-  | `aiOptions.headers`           | object            | ✗    | `{}`       | AI 请求头，如 Authorization、Content‑Type 等            |
-  | `aiOptions.batchSize`         | number            | ✗    | `5`        | 每批次分析条数                                          |
-  | `aiOptions.maxQueueSize`      | number            | ✗    | `5`        | AI 分析批次队列最大长度                                 |
-  | `aiOptions.maxRetry`          | number            | ✗    | `1`        | AI 分析最大重试次数                                     |
-  | `aiOptions.maxMessages`       | number            | ✗    | `20`       | 本地缓存的最大对话条数                                  |
+  | 名称                          | 类型              | 必填 | 默认值       | 说明                                          |
+    | ----------------------------- | ----------------- | ---- |-----------|---------------------------------------------|
+  | `router`                      | Router            | ✗    | —         | Vue Router 实例                               |
+  | `report`                      | Object            | ✗    | —         | 上报配置对象                                      |
+  | `report.url`                  | string            | ✗    | —         | 后端上报接口 URL                                  |
+  | `report.headers`              | object            | ✗    | `{}`      | 自定义请求头，如 token、Content‑Type 等               |
+  | `report.batchSize`            | number            | ✗    | `5`       | 每批次上报条数                                     |
+  | `report.maxQueueSize`         | number            | ✗    | `5`       | 批次队列最大长度                                    |
+  | `report.maxRetry`             | number            | ✗    | `1`       | 最大重试次数                                      |
+  | `report.reportUrlTtl`         | number (ms)       | ✗    | `86400000` | 相同 key 的最小上报间隔（毫秒）                          |
+  | `report.storageKey`           | string            | ✗    | —         | 本地存储 Key                                    |
+  | `report.setParams`            | func              | ✗    | —         | 自定义批量上报参数组装函数                               |
+  | `report.onSuccess`            | func              | ✗    | —         | 上报成功回调                                      |
+  | `aiOptions`                   | Object            | ✗    | —         | AI 分析配置                                     |
+  | `aiOptions.url`               | string            | ✗    | —         | AI 接口 URL                                   |
+  | `aiOptions.model`             | string            | ✗    | —         | AI 模型名称                                     |
+  | `aiOptions.headers`           | object            | ✗    | `{}`      | AI 请求头，如 Authorization、Content‑Type 等       |
+  | `aiOptions.batchSize`         | number            | ✗    | `5`       | 每批次分析条数                                     |
+  | `aiOptions.maxQueueSize`      | number            | ✗    | `5`       | AI 分析批次队列最大长度                               |
+  | `aiOptions.maxRetry`          | number            | ✗    | `1`       | AI 分析最大重试次数                                 |
+  | `aiOptions.maxMessages`       | number            | ✗    | `20`      | 本地缓存的最大对话条数                                 |
   | `aiOptions.analyzeTtl`        | number (ms)       | ✗    | `86400000` | AI 分析缓存过期时间（毫秒）                             |
-  | `aiOptions.storageKey`        | string            | ✗    | —          | AI 分析本地存储 Key                                     |
-  | `aiOptions.logToConsole`      | boolean           | ✗    | `true`     | 是否打印 AI 分析结果到控制台                            |
-  | `aiOptions.otherOptions`      | object / null     | ✗    | `null`     | 透传给 AI 服务端的其他参数，如 `stream`, `temperature` 等 |
-  | `aiOptions.onSuccess`         | func              | ✗    | —          | AI 响应成功回调                                         |
-  | `scoringRules`                | Object            | ✗    | —          | 性能阈值规则，可自定义警告/严重阈值                     |
-  | `allowCollectEnv`             | boolean           | ✗    | `false`    | 是否采集用户环境信息（浏览器、系统、网络等）            |
-  | `maxFpsSamples`               | number            | ✗    | `60`       | 最大 FPS 采样点数                                       |
-  | `samplingRate`                | number            | ✗    | `1.0`      | 随机采样率，范围 0~1                                    |
-  | `logLevel`                    | string            | ✗    | `WARN`     | 日志级别（DEBUG/INFO/WARN/ERROR/SILENT）                |
+  | `aiOptions.storageKey`        | string            | ✗    | —         | AI 分析本地存储 Key                               |
+  | `aiOptions.logToConsole`      | boolean           | ✗    | `true`    | 是否打印 AI 分析结果到控制台                            |
+  | `aiOptions.otherOptions`      | object / null     | ✗    | `null`    | 透传给 AI 服务端的其他参数，如 `stream`, `temperature` 等 |
+  | `aiOptions.onSuccess`         | func              | ✗    | —         | AI 响应成功回调                                   |
+  | `scoringRules`                | Object            | ✗    | —         | 性能阈值规则，可自定义警告/严重阈值                          |
+  | `allowCollectEnv`             | boolean           | ✗    | `false`   | 是否采集用户环境信息（浏览器、系统、网络等）                      |
+  | `maxFpsSamples`               | number            | ✗    | `60`      | 最大 FPS 采样点数                                 |
+  | `samplingRate`                | number            | ✗    | `1.0`     | 随机采样率，范围 0~1                                |
+  | `logLevel`                    | string            | ✗    | `WARN`    | 日志级别（DEBUG/INFO/WARN/ERROR/SILENT）          |
+  | `maxResourceEntries`          | string            | ✗    | `50`      | 资源采集数（排序并截取前XX个资源）                          |
+  | `fullCollection`          | string            | ✗    | `false`        | 允许全量采集（设置后允许全量采集资源信息，通常用于测试）                |
 
 - **返回值**：
 
