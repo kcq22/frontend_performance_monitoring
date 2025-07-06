@@ -22,9 +22,6 @@ export class PerfCollector {
   constructor (onPageComplete, {
     maxFpsSamples = 60,
     samplingRate = 1,
-    maxResourceEntries = 50,
-    maxLongTaskEntries = 50,
-    fullCollection = false,
   } = {}) {
     // 参数校验
     if (typeof onPageComplete !== 'function') {
@@ -33,9 +30,6 @@ export class PerfCollector {
 
     this.onPageComplete = onPageComplete
     this.maxFpsSamples = maxFpsSamples
-    this.maxResourceEntries = maxResourceEntries
-    this.maxLongTaskEntries = maxLongTaskEntries
-    this.fullCollection = fullCollection
     this.currentPage = window.location.pathname
     // 添加采样率配置
     this.samplingRate = samplingRate < 0 || samplingRate > 1 ? 1 : samplingRate
@@ -43,16 +37,14 @@ export class PerfCollector {
     // 用于存储各个 stop 回调，方便 destroy 时调用
     this._observers = {
       resource: null,
-      longtask: null,
+      longTask: null,
       fps: null,
       memory: null,
       cls: null,
       webVitals: null,
       spaRoute: null
     }
-    this._firstDone = false
-    this._loadHandler = null
-    this._timeoutId = null
+
     this._unlistenNative = null
 
     this.resetMetrics()
@@ -78,29 +70,20 @@ export class PerfCollector {
    */
   _initSoftVitals() {
     // —— 2. 软导航阶段采集：资源 ——
-    this._observers.resource = observeResources((entries) => {
+    this._observers.resource = observeResources((stats) => {
       this.hasAnyMetric = true
-      entries.forEach((entry) => {
-        const { name } = entry
-        this.metrics.resourceEntries.push({
-          name: name.length > TEXT_LENGTH ? `${name.slice(0, TEXT_LENGTH)}...` : name,
-          duration: entry.duration ? entry.duration.toFixed(3) : entry.duration,
-          startTime: entry.startTime.toFixed(3)
-        })
-      })
+      this.metrics.resourceStats = {
+        ...stats
+      }
     })
 
     // —— 3. 软导航阶段采集：长任务 (暂不开放)——
-    // this._observers.longtask = observeLongTasks((entries) => {
-    //   this.hasAnyMetric = true
-    //   entries.forEach((entry) => {
-    //     this.metrics.longtaskEntries.push({
-    //       name: entry.name,
-    //       duration: entry.duration,
-    //       startTime: entry.startTime
-    //     })
-    //   })
-    // })
+    this._observers.longTask = observeLongTasks((stats) => {
+      this.hasAnyMetric = true
+      this.metrics.longTaskStats = {
+        ...stats
+      }
+    })
 
     // —— 4. 软导航阶段采集：FPS ——
     this._observers.fps = trackFPS((fpsVal) => {
@@ -171,17 +154,6 @@ export class PerfCollector {
   }
 
   buildSnapshot(page, fullPath) {
-    // 排序并截取前 maxResourceEntries 个资源
-    const resource = this.fullCollection
-      ? this.metrics.resourceEntries
-      : this.metrics.resourceEntries
-      ?.sort((a, b) => Number(b.duration) - Number(a.duration))
-      .slice(0, this.maxResourceEntries) || []
-    // const longtask = this.fullCollection
-    //   ? this.metrics.longtaskEntries
-    //   : this.metrics.longtaskEntries
-    //       ?.sort((a, b) => Number(b.duration) - Number(a.duration))
-    //       .slice(0, this.maxLongTaskEntries) || []
     return {
       pageName: page || this.currentPage,
       fullPath,
@@ -193,10 +165,10 @@ export class PerfCollector {
       CLS: this.metrics.CLS || 0,
       FID: this.metrics.FID || null,
       // 资源、长任务、内存、帧率
-      resource: [...resource],
-      // longtask: [...longtask],
+      resourceStats: this.metrics.resourceStats || null,
+      longTaskStats: this.metrics.longTaskStats || null,
       memory: this.metrics.memory || null,
-      fps: [...this.metrics.fpsSamples],
+      fpsSamples: [...this.metrics.fpsSamples],
       // SPA 渲染时长（soft nav）
       SPA_Render: this.metrics.SPA_Render || null
     }

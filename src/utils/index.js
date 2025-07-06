@@ -412,3 +412,34 @@ export function normalizePath(fullUrl) {
     return parts[0].split('?')[0]
   }
 }
+
+/**
+ * 将数字固定到指定小数位数
+ * @param {number|string} number - 要处理的数字
+ * @param {number} [fixed=3] - 要保留的小数位数，默认为3
+ * @returns {number|*} 处理后的数字，如果输入不是有效数字则原样返回
+ */
+export function numberFixed(number, fixed = 3) {
+  // 1. 检查number是否为null或undefined
+  if (number == null) return number
+
+  // 2. 检查fixed是否为有效正整数
+  const parsedFixed = Math.max(0, Math.min(20, Math.floor(Number(fixed)) || 3))
+
+  try {
+    // 3. 尝试转换为数字
+    const num = Number(number)
+
+    // 4. 检查是否为有效数字
+    if (Number.isNaN(num) || !Number.isFinite(num)) {
+      return number
+    }
+
+    // 5. 使用更精确的四舍五入方法
+    const factor = Math.pow(10, parsedFixed)
+    return Math.round((num + Number.EPSILON) * factor) / factor
+  } catch (e) {
+    // 6. 捕获任何意外错误
+    return number
+  }
+}

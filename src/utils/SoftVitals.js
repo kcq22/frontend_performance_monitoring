@@ -1,7 +1,9 @@
-import { logger } from '../utils/logger'
+import { logger } from './logger'
+import { numberFixed } from './index'
+
 /**
  * 监听资源加载，回调会收到 PerformanceResourceTiming 数组，并返回一个 stop 函数用于断开监听
- * @param {(entries: PerformanceResourceTiming[]) => void} callback
+ * * @param {(stats: { count: number, avgTime: number, maxTime: number }) => void} callback
  * @returns {{ stop: () => void }} stop 方法用于断开观察
  */
 export function observeResources(callback) {
@@ -9,17 +11,38 @@ export function observeResources(callback) {
     typeof window === 'undefined' ||
     typeof PerformanceObserver === 'undefined'
   ) {
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
+
+  // 累积数据
+  let count = 0
+  let totalTime = 0
+  let maxTime = 0
 
   let obs
   try {
     obs = new PerformanceObserver((list) => {
       try {
         const entries = list.getEntries()
-        if (entries && entries.length > 0) {
-          callback(entries)
-        }
+        if (!entries.length) return
+
+        entries.forEach((e) => {
+          const d = e.duration
+          count++
+          totalTime += d
+          if (d > maxTime) maxTime = d
+        })
+
+        // 计算平均耗时
+        const avgTime = count > 0 ? totalTime / count : 0
+        callback({
+          count: numberFixed(count),
+          avgTime: numberFixed(avgTime),
+          maxTime: numberFixed(maxTime)
+        })
       } catch (e) {
         logger.error('[observeResources] 回调执行失败：', e)
       }
@@ -27,7 +50,10 @@ export function observeResources(callback) {
     obs.observe({ type: 'resource', buffered: true })
   } catch (e) {
     logger.warn('[observeResources] PerformanceObserver 观察失败：', e)
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
 
   return {
@@ -43,7 +69,7 @@ export function observeResources(callback) {
 
 /**
  * 监听长任务（JS 执行时间大于 50ms），回调会收到 PerformanceLongTaskTiming 数组，并返回一个 stop 函数
- * @param {(entries: PerformanceLongTaskTiming[]) => void} callback
+ * * @param {(stats: { count: number, avgTime: number, maxTime: number }) => void} callback
  * @returns {{ stop: () => void }} stop 方法用于断开观察
  */
 export function observeLongTasks(callback) {
@@ -51,17 +77,37 @@ export function observeLongTasks(callback) {
     typeof window === 'undefined' ||
     typeof PerformanceObserver === 'undefined'
   ) {
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
+
+  // 累积数据
+  let count = 0
+  let totalTime = 0
+  let maxTime = 0
 
   let obs
   try {
     obs = new PerformanceObserver((list) => {
       try {
         const entries = list.getEntries()
-        if (entries && entries.length > 0) {
-          callback(entries)
-        }
+        if (!entries.length) return
+
+        entries.forEach((e) => {
+          const d = e.duration
+          count++
+          totalTime += d
+          if (d > maxTime) maxTime = d
+        })
+
+        const avgTime = (count > 0 ? totalTime / count : 0).toFixed(3)
+        callback({
+          count: numberFixed(count),
+          avgTime: numberFixed(avgTime),
+          maxTime: numberFixed(maxTime)
+        })
       } catch (e) {
         logger.error('[observeLongTasks] 回调执行失败：', e)
       }
@@ -69,7 +115,10 @@ export function observeLongTasks(callback) {
     obs.observe({ type: 'longtask', buffered: true })
   } catch (e) {
     logger.warn('[observeLongTasks] PerformanceObserver 观察失败：', e)
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
 
   return {
@@ -91,7 +140,10 @@ export function observeLongTasks(callback) {
  */
 export function trackFPS(callback, maxSamples = 60) {
   if (typeof window === 'undefined' || typeof requestAnimationFrame === 'undefined') {
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
 
   let lastTime = performance.now()
@@ -154,7 +206,10 @@ export function trackMemory(callback, intervalMs = 5000) {
     !performance.memory ||
     typeof setInterval === 'undefined'
   ) {
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
 
   let timerId = null
@@ -168,7 +223,10 @@ export function trackMemory(callback, intervalMs = 5000) {
     }, intervalMs)
   } catch (e) {
     logger.warn('[trackMemory] setInterval 失败：', e)
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
 
   return {
@@ -194,7 +252,10 @@ export function trackCLS(callback) {
     typeof window === 'undefined' ||
     typeof PerformanceObserver === 'undefined'
   ) {
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
 
   let clsSum = 0
@@ -215,7 +276,10 @@ export function trackCLS(callback) {
     obs.observe({ type: 'layout-shift', buffered: true })
   } catch (e) {
     logger.warn('[trackCLS] PerformanceObserver 观察失败：', e)
-    return { stop: () => {} }
+    return {
+      stop: () => {
+      }
+    }
   }
 
   return {
