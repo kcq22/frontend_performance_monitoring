@@ -154,6 +154,8 @@ export class PerfCollector {
   }
 
   buildSnapshot(page, fullPath) {
+    const usedBytes = this.metrics.memory || 0;              // 原 memory 字段
+    const usedMB  = Math.round((usedBytes / 1024 / 1024) * 10) / 10; // 保留一位小数
     return {
       pageName: page || this.currentPage,
       fullPath,
@@ -167,10 +169,11 @@ export class PerfCollector {
       // 资源、长任务、内存、帧率
       resourceStats: this.metrics.resourceStats || null,
       longTaskStats: this.metrics.longTaskStats || null,
-      memory: this.metrics.memory || null,
+      // memory: this.metrics.memory || null,
       fpsSamples: [...this.metrics.fpsSamples],
       // SPA 渲染时长（soft nav）
-      SPA_Render: this.metrics.SPA_Render || null
+      SPA_Render: this.metrics.SPA_Render || null,
+      usedJSHeapMB: usedMB
     }
   }
 
@@ -187,8 +190,8 @@ export class PerfCollector {
       TTFB: null,
       CLS: 0,
       FID: null,
-      resourceEntries: [],
-      // longtaskEntries: [],
+      resourceStats: {},
+      longTaskStats: {},
       memory: null,
       fpsSamples: [],
       SPA_Render: null

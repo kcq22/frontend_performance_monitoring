@@ -14,5 +14,5 @@ export const defaultScoringRules = {
   resourceTotal: [500, 1500],
   maxLongTask: [50, 200],
   avgFPS: [55, 30],
-  jsHeapLimit: [1.5 * 1024 ** 3, 0.5 * 1024 ** 3] // 单位字节
+  usedJSHeapMB: [500, 1500] // 单位 MB：<500 优，500–1500 良，>1500 差
 }

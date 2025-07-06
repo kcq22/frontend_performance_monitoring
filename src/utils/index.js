@@ -1,5 +1,4 @@
 import { defaultScoringRules } from './const'
-import { logger } from './logger'
 
 /**
  * 通用控制台展示函数：把 AI 返回的 Markdown 内容按 “### ” 标题分组，
@@ -164,21 +163,46 @@ export function collectEnvironmentInfo () {
 /**
  * 把“阈值配置”序列化成一段文字，方便拼进 system 提示里。
  */
-function serializeRules (rules) {
-  // 结果示例：
-  // LCP: ≤1000 优；1000–2000 良；>2000 差
-  // FCP: ≤500 优；500–1000 良；>1000 差
-  // avgFPS: ≥55 优；30–55 良；<30 差
+function serializeRules(
+  rules,
+  {
+    higherBetter = ['avgFPS', 'fps'],
+    byteMetrics = ['jsHeapLimit', 'usedJSHeap']
+  } = {}
+) {
   const lines = []
-  for (const [key, [first, second]] of Object.entries(rules)) {
-    if (key === 'avgFPS') {
-      lines.push(`• ${key}: ≥${first} → 优；${second}–${first} → 良；<${second} → 差`)
-    } else if (key === 'jsHeapLimit') {
-      lines.push(`• ${key}: ≥${(first / 1024 ** 3).toFixed(1)}GB → 优；${(second / 1024 ** 3).toFixed(1)}GB–${(first / 1024 ** 3).toFixed(1)}GB → 良；<${(second / 1024 ** 3).toFixed(1)}GB → 差`)
+
+  const formatValue = (metric, v) => {
+    if (byteMetrics.includes(metric)) {
+      // 如果 v > 1 GB，则以 GB 显示，否则 MB
+      const gb = v / (1024 ** 3)
+      if (gb >= 1) return `${gb.toFixed(1)}GB`
+      const mb = v / (1024 ** 2)
+      return `${mb.toFixed(1)}MB`
+    }
+    return String(v)
+  }
+
+  for (const [metric, [good, mid]] of Object.entries(rules)) {
+    const isHigherBetter = higherBetter.includes(metric)
+
+    // 格式化阈值值
+    const goodFmt = formatValue(metric, good)
+    const midFmt  = formatValue(metric, mid)
+
+    if (isHigherBetter) {
+      // 越大越好： ≥ mid → 优； good–mid → 良； < good → 差
+      lines.push(
+        `• ${metric}: ≥${midFmt} → 优；${goodFmt}–${midFmt} → 良；<${goodFmt} → 差`
+      )
     } else {
-      lines.push(`• ${key}: ≤${first} → 优；${first}–${second} → 良；>${second} → 差`)
+      // 越小越好： ≤ good → 优；good–mid → 良；>mid → 差
+      lines.push(
+        `• ${metric}: ≤${goodFmt} → 优；${goodFmt}–${midFmt} → 良；>${midFmt} → 差`
+      )
     }
   }
+
   return lines.join('\n')
 }
 
@@ -188,7 +212,7 @@ function serializeRules (rules) {
  *                           格式同 defaultScoringRules（键相同，值为 [优阈值, 良阈值]）
  * @returns {string}
  */
-export function buildSystemPrompt (userRules = {}) {
+export function buildSystemPrompt(userRules = {}) {
   // 创建有效规则的副本（基于默认规则）
   const effectiveRules = { ...defaultScoringRules }
 
@@ -212,6 +236,99 @@ export function buildSystemPrompt (userRules = {}) {
   // 2. 把合并后的阈值格式化成一段可读文本
   const rulesText = serializeRules(effectiveRules)
 
+  // 2. 准备示例快照（最新版结构），如果外部未传，则使用默认示例
+  const defaultSnapshot = {
+    environment: {
+      gpu: {
+        renderer: "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
+        vendor: "Google Inc. (Apple)"
+      },
+      hardware: {
+        logicalProcessors: 8,
+        approxDeviceMemoryGB: 8,
+        memoryApproxCategory: "高（≥8 GB）"
+      },
+      screen: {
+        width: 3008,
+        height: 1692,
+        availWidth: 3008,
+        availHeight: 1667,
+        devicePixelRatio: 2
+      },
+      uaData: {
+        mobile: false,
+        platform: "macOS",
+        brands: [
+          { brand: "Chromium", version: "136" },
+          { brand: "Google Chrome", version: "136" },
+          { brand: "Not.A/Brand", version: "99" }
+        ],
+        highEntropy: {
+          architecture: "arm",
+          bitness: "64",
+          model: "",
+          platform: "macOS",
+          platformVersion: "14.3.1",
+          uaFullVersion: "136.0.7103.93"
+        }
+      }
+    },
+    pages: [
+      {
+        page: "detail",
+        fullPath: "/product/detail/123",
+        LCP: 1200,
+        FCP: 800,
+        TTFB: 150,
+        CLS: 0.08,
+        FID: 60,
+        SPA_Render: 900,
+        resourceStats: { count: 153, avgTime: 51.849, maxTime: 350.5 },
+        longTaskStats: { count: 4, avgTime: 131.5, maxTime: 248 },
+        fpsSamples: [60, 57, 60, 55],
+        usedJSHeapMB: 1200000000,
+      }
+    ]
+  }
+  const example = defaultSnapshot || {}
+  // 用 2 格缩进美化
+  const snapshotText = JSON.stringify(example, null, 2)
+
+  // —— 3. 定义输出 Schema 并序列化 ——
+  const outputSchema = {
+    reports: [
+      {
+        page: "string",
+        fullPath: "string",
+        missingMetrics: ["string"],
+        issues: [
+          {
+            metric: "string",
+            value: "number",
+            threshold: "number",
+            severity: "高|中|低",
+            location: "string",
+            description: "string",
+            target: "number",
+            recommendations: [
+              { text: "string", snippet: "string" }
+            ]
+          }
+        ],
+        summary: {
+          overallScore: "number",
+          level: "优|良|中|差|劣",
+          actionList: {
+            high: ["string"],
+            medium: ["string"],
+            low: ["string"]
+          }
+        }
+      }
+    ]
+  }
+  const schemaText = JSON.stringify(outputSchema, null, 2)
+
   // 3. 拼接进系统提示模板
   return `
 你是前端性能优化专家。后续所有用户消息都是“页面快照+设备信息”JSON。你将参考下面的阈值配置来进行打分和给出优化建议（中文回答），请严格按照输出格式返回结果，不要多余文字。
@@ -220,125 +337,29 @@ export function buildSystemPrompt (userRules = {}) {
 ${rulesText}
 
 === 输入快照示例 ===
-{
-  environment: {
-    gpu: {
-      renderer: "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
-      vendor: "Google Inc. (Apple)"
-    },
-    hardware: {
-      logicalProcessors: 8,
-      approxDeviceMemoryGB: 8,
-      memoryApproxCategory: "高（≥8 GB）"
-    },
-    screen: {
-      width": 3008,
-      height: 1692,
-      availWidth: 3008,
-      availHeight: 1667,
-      devicePixelRatio: 2
-    },
-    uaData: {
-      mobile: false,
-      platform: "macOS",
-      brands: [
-          "Chromium 136",
-          "Google Chrome 136",
-          "Not.A/Brand 99"
-      ],
-      highEntropy: {
-          architecture: "arm",
-          bitness: "64",
-          brands: [
-              {
-                brand: "Chromium",
-                version: "136"
-              },
-              {
-                brand: "Google Chrome",
-                version: "136"
-              },
-              {
-                brand: "Not.A/Brand",
-                version: "99"
-              }
-          ],
-          mobile: false,
-          model: "",
-          platform: "macOS",
-          platformVersion: "14.3.1",
-          uaFullVersion: "136.0.7103.93"
-      }
-    }
-  },
-  pages: [
-    {
-    "page": "detail",
-    "fullPath": "/product/detail/123",
-    "LCP": 1200,
-    "FCP": 800,
-    "TTFB": 150,
-    "CLS": 0.08,
-    "FID": 60,
-    "SPA_Render": 900,
-    "resource": [
-      { "name": "runtime.js", "duration": 400, "startTime": 120 },
-      { "name": "app.js",     "duration": 600, "startTime": 130 }
-    ],
-    "fps": [60, 57, 60, 55],
-    "jsHeapSizeLimit": 1500000000,
-    "memory": 1200000000
-    }
-  ],
-  ...
-}
+\`\`\`json
+${snapshotText}
+\`\`\`
 
 === 输出 JSON 结构（必须严格对应） ===
-{
-  reports: [
-    {
-      "page": string,
-      "fullPath": string,
-      "missingMetrics": [ string ],
-      "issues": [
-        {
-          "metric": string,
-          "value": number,
-          "threshold": number,
-          "severity": "高|中|低",
-          "location": string,
-          "description": string,
-          "target": number,
-          "recommendations": [
-            { "text": string, "snippet": string }
-          ]
-        }
-      ],
-      "missingCollection": [
-        { "metric": string, "reason": string, "suggestion": string }
-      ],
-      "summary": {
-        "overallScore": number,
-        "level": "优|良|中|差|劣",
-        "actionList": {
-          "high": [ string ],
-          "medium": [ string ],
-          "low": [ string ]
-        }
-      }
-    }
-    ...
-  ]
-}
+\`\`\`json
+${schemaText}
+\`\`\`
 
 计算提示（仅供模型参考）：
-- 若某指标值为 null，列入 missingMetrics，并在 missingCollection 中说明“缺失原因+在生产环境如何补采埋点”。
-- 否则对每个指标按上面给出的阈值区间确定 severity：
+- 对每个指标按上面给出的阈值区间确定 severity：
   • “优” → severity="低"；“良” → severity="中"；“差” → severity="高"。
 - AI 自行计算 overallScore（0–100 分），并给出 level。
 - 请确保 recommendations 中带可复制的 code snippet。
 
-**请严格输出“reports”数组，不要多余注释或文字。**`.trim()
+=== 输出要求（必须遵守） ===
+- 必须仅返回合法 JSON 字符串；
+- JSON 必须使用 \`\`\`json 包裹；
+- JSON 最外层必须为对象，必须包含 "reports": [...] 字段；
+- 不要包含任何解释说明、开头/结尾语句、注释、标题或多余内容；
+- 严格按照 schema 格式结构返回；
+- 如遇无法解析的数据，也应返回结构完整的 JSON，并标注为空或 reason 字段。
+`.trim()
 }
 
 /**
@@ -351,37 +372,53 @@ ${rulesText}
  *    - data:   如果 success 为 true，则为解析后的 JS 对象
  *    - error:  如果 success 为 false，则为错误信息
  */
-export function parseAIJsonString (rawStr) {
-  if (typeof rawStr !== 'string') {
-    return rawStr
-  }
+export function parseAIJsonString(rawStr) {
+  if (typeof rawStr !== 'string') return rawStr;
 
-  // 1. 去除开头和结尾的空白行
-  let text = rawStr.trim()
+  // 1. 清理首尾空白字符
+  let text = rawStr.trim();
 
-  // 2. 如果包含 ```json ... ```，将其提取出来
-  //    使用正则匹配 ```json 和对应的 ```，并提取中间部分
-  const fencedBlockRegex = /```json\s*([\s\S]*?)```/i
-  const match = fencedBlockRegex.exec(text)
-  if (match && match[1]) {
-    text = match[1].trim()
+  // 2. 提取 Markdown 代码块中的 JSON 内容（优先 ` ```json `）
+  const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)```/i);
+  if (jsonBlockMatch) {
+    text = jsonBlockMatch[1].trim();
   } else {
-    // 可能是 ```（没有 json 标记）或没有代码块，尝试去除所有 ``` 标记
-    // 匹配 ```（可带语言）开头到对应结束
-    const genericFenced = /```[\s\S]*?```/g
-    if (genericFenced.test(text)) {
-      // 移除所有 ``` 包裹
-      text = text.replace(genericFenced, '').trim()
+    // 普通 ``` 包裹（无 json 标签）
+    const genericBlocks = text.match(/```[\s\S]*?```/g);
+    if (genericBlocks) {
+      text = genericBlocks
+        .map(b => b.replace(/```[\w]*\s*/g, '').replace(/```$/, '').trim())
+        .join('\n');
     }
   }
 
-  // 3. 此时 text 应该是一个合法的 JSON 字符串，尝试 parse
+  // 3. 标准 JSON 解析尝试
   try {
-    return JSON.parse(text)
-  } catch (e) {
-    // 捕获 JSON 解析错误，返回原始数据
-    logger.error('JSON.parse 失败：', e)
-    return rawStr
+    return JSON.parse(text);
+  } catch (e1) {}
+
+  // 4. 尝试转义修复
+  try {
+    const cleanedStr = text
+      .replace(/^"(.*)"$/, '$1')       // 去除整体包裹引号
+      .replace(/\\"/g, '"')            // 转义引号
+      .replace(/\\\\/g, '\\')          // 转义反斜线
+      .replace(/\\n/g, '\n')           // 换行
+      .replace(/\\t/g, '\t');          // 制表符
+
+    return JSON.parse(cleanedStr);
+  } catch (e2) {}
+
+  // 5. 最后尝试：提取对象、修复单引号
+  try {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+
+    const singleQuoteFix = text.replace(/'/g, '"');
+    return JSON.parse(singleQuoteFix);
+  } catch (e3) {
+    console.error('JSON.parse 错误:', e3);
+    return rawStr; // 返回原始字符串，避免程序崩溃
   }
 }
 
