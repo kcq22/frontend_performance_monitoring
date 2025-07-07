@@ -3,7 +3,7 @@
 本 SDK 适用于 Vue 3 及任意 H5 SPA 应用（有无 Vue Router 均可），集成了：
 
 - **硬导航 Core Web Vitals**（LCP、FCP、TTFB、FID、CLS），自动检测并采集
-- **软导航指标**：资源加载、FPS、内存、CLS 累计
+- **软导航指标**：资源加载、长任务、FPS、内存、CLS 累计
 - **SPA 渲染时长**：精准测量 Vue Router 渲染或原生 History/Hash 路由渲染耗时
 - **自动路由监听**：优先绑定 Vue Router，否则回退到原生 History/Hash/UNI‑App/Taro 全面捕获 URL 变化
 - **批量上报** & **可选 AI 分析**
@@ -89,13 +89,9 @@ const { perfInstance, destroy } = initPerfSDK({
   maxFpsSamples: 100,          // 最大 FPS 采样点数
   samplingRate: 1.0,           // 采样率（0~1）
   logLevel: 'debug',           // 日志级别（DEBUG/INFO/WARN/ERROR/SILENT）
-  maxResourceEntries: 50, // 最大资源条目数 默认50
-  fullCollection: false // 是否全量采集资源
 })
 
 const app = createApp(App)
-// 安装首屏性能测量插件
-app.use(createPerfFirstPaintPlugin({ router, perfInstance }))
 app.use(router)
 app.mount('#app')
 
@@ -137,8 +133,6 @@ window.addEventListener('beforeunload', destroy)
   | `maxFpsSamples`               | number            | ✗    | `60`      | 最大 FPS 采样点数                                 |
   | `samplingRate`                | number            | ✗    | `1.0`     | 随机采样率，范围 0~1                                |
   | `logLevel`                    | string            | ✗    | `WARN`    | 日志级别（DEBUG/INFO/WARN/ERROR/SILENT）          |
-  | `maxResourceEntries`          | string            | ✗    | `50`      | 资源采集数（排序并截取前XX个资源）                          |
-  | `fullCollection`          | string            | ✗    | `false`        | 允许全量采集（设置后允许全量采集资源信息，通常用于测试）                |
 
 - **返回值**：
 
