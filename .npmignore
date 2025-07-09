@@ -9,3 +9,4 @@ jest.config.js
 # 忽略构建过程文件
 *.log
 *.tmp
+dist/*.map
