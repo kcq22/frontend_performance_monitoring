@@ -6,7 +6,7 @@ import filesize from 'rollup-plugin-filesize'
 import { visualizer } from 'rollup-plugin-visualizer';
 
 const extensions = ['.js']
-const external = ['vue', 'vue-router', 'web-vitals']
+const external = ['vue', 'vue-router']
 const isProd = process.env.NODE_ENV === 'production'
 
 const babelOptions = {

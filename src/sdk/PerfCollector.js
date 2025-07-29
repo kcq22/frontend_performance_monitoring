@@ -166,6 +166,7 @@ export class PerfCollector {
       TTFB: this.metrics.TTFB || null,
       CLS: this.metrics.CLS || 0,
       FID: this.metrics.FID || null,
+      INP: this.metrics.INP || null,
       // 资源、长任务、内存、帧率
       resourceStats: this.metrics.resourceStats || null,
       longTaskStats: this.metrics.longTaskStats || null,
@@ -190,6 +191,7 @@ export class PerfCollector {
       TTFB: null,
       CLS: 0,
       FID: null,
+      INP: null,
       resourceStats: {},
       longTaskStats: {},
       memory: null,

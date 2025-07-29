@@ -1,7 +1,7 @@
 // src/sdk/CollectHardVitals.js
 
-import { getLCP, getFCP, getCLS, getFID, getTTFB } from 'web-vitals'
-import { logger } from '../utils/logger'
+import { onLCP, onFCP, onCLS, onINP, onTTFB } from 'web-vitals'
+import { logger } from './logger'
 
 /**
  * collectHardVitals
@@ -111,19 +111,19 @@ export function collectHardVitals(
   }
 
   // —— 1. LCP —— （可多次上报）
-  if (!tryWebVital(null, 'LCP', { reportAllChanges })) {
+  if (!tryWebVital(onLCP, 'LCP', { reportAllChanges })) {
     observeNative('largest-contentful-paint', 'LCP', e => e.startTime)
   }
 
   // —— 2. FCP —— （只上报第一次）
-  if (!tryWebVital(getFCP, 'FCP', { reportAllChanges })) {
+  if (!tryWebVital(onFCP, 'FCP', { reportAllChanges })) {
     observeNative('paint', 'FCP', e =>
       e.name === 'first-contentful-paint' ? e.startTime : null
     )
   }
 
   // —— 3. CLS —— （可多次累积上报）
-  if (!tryWebVital(getCLS, 'CLS', { reportAllChanges })) {
+  if (!tryWebVital(onCLS, 'CLS', { reportAllChanges })) {
     let clsAcc = 0
     if (typeof PerformanceObserver === 'function') {
       try {
@@ -142,15 +142,22 @@ export function collectHardVitals(
   }
 
   // —— 4. FID —— （只上报第一次）
-  if (!tryWebVital(getFID, 'FID', { reportAllChanges })) {
+  if (!tryWebVital(null, 'FID', { reportAllChanges })) {
     observeNative('first-input', 'FID', e =>
       e.processingStart - e.startTime
+    )
+  }
+  // INP ≈「一次交互从点击到下一帧完成的全程时延，取生命周期中的最糟表现」
+  if (!tryWebVital(onINP, 'INP', { reportAllChanges })) {
+    observeNative('event', 'INP', e =>
+      // 计算从交互触发到下一帧渲染完成的时长
+      e.processingEnd - e.startTime
     )
   }
 
   // —— 5. TTFB —— （只上报第一次 + load/timeout 兜底）
   // 尝试 web-vitals
-  const sawTV = tryWebVital(getTTFB, 'TTFB')
+  const sawTV = tryWebVital(onTTFB, 'TTFB')
   // 原生 navigation timing 立即读一次
   let navEntries = performance.getEntriesByType?.('navigation') || []
   if (!sawTV && navEntries.length) {
