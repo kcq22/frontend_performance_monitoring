@@ -29,8 +29,6 @@ export function initPerfSDK(options) {
     maxFpsSamples,
     samplingRate, // 采样率
     logLevel, // 日志级别
-    maxResourceEntries = 50, // 资源采样数
-    fullCollection = false, // 全量采集
   } = options
 
 
@@ -103,8 +101,6 @@ export function initPerfSDK(options) {
       maxFpsSamples,
       useWebVitals,
       samplingRate,
-      maxResourceEntries,
-      fullCollection,
     }
   )
 

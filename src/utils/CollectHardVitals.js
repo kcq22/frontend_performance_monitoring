@@ -111,7 +111,7 @@ export function collectHardVitals(
   }
 
   // —— 1. LCP —— （可多次上报）
-  if (!tryWebVital(getLCP, 'LCP', { reportAllChanges })) {
+  if (!tryWebVital(null, 'LCP', { reportAllChanges })) {
     observeNative('largest-contentful-paint', 'LCP', e => e.startTime)
   }
 
